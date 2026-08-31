@@ -309,11 +309,11 @@
 .fs-floating-close-btn {
   pointer-events: auto;
   align-self: flex-end;
-  background: rgba(0, 0, 0, 0.55);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(255, 255, 255, 0.85);
   border-radius: 50%;
   width: 26px;
   height: 26px;
@@ -326,7 +326,7 @@
 }
 
 .fs-floating-close-btn:hover {
-  background: rgba(0, 0, 0, 0.85);
+  background: rgba(255, 255, 255, 0.25);
   color: #ffffff;
   transform: scale(1.08);
 }
@@ -366,7 +366,7 @@
 .fs-msg-author {
   font-size: 10px;
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.7);
   margin-bottom: 2px;
   padding: 0 4px;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
@@ -380,24 +380,29 @@
   word-break: break-word;
 }
 
+/* User's own message: transparent glass with subtle white sheen */
 .fs-msg-item.is-me .fs-msg-bubble {
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  color: #000000;
-  font-weight: 600;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  color: #ffffff;
+  font-weight: 500;
+  border: 1px solid rgba(255, 255, 255, 0.32);
   border-bottom-right-radius: 4px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
 }
 
+/* Other users' messages: transparent dark glass */
 .fs-msg-item.is-other .fs-msg-bubble {
-  background: rgba(14, 14, 18, 0.72);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   color: #ffffff;
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-bottom-left-radius: 4px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
 }
 
 .fs-chat-input-area {
@@ -407,16 +412,17 @@
   border: none;
 }
 
+/* Transparent glass input pill */
 .fs-input-pill {
   display: flex;
   align-items: center;
-  background: rgba(10, 10, 14, 0.75);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 24px;
-  padding: 4px 6px 4px 12px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  padding: 3px 6px 3px 10px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
 }
 
 .fs-input-pill input {
@@ -425,7 +431,11 @@
   border: none;
   color: #ffffff;
   font-size: 12px;
+  line-height: 18px;
+  padding: 5px 8px; /* ample left space so blinking cursor is fully visible */
+  margin: 0;
   outline: none;
+  caret-color: #ffffff;
 }
 
 .fs-input-pill input::placeholder {
@@ -435,22 +445,27 @@
 .fs-input-send-btn {
   padding: 6px 10px;
   border-radius: 18px;
-  background: #ffffff;
-  color: #000000;
+  background: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: none;
+  border: 1px solid rgba(255, 255, 255, 0.25);
   cursor: pointer;
-  transition: transform var(--transition-fast);
+  transition: all var(--transition-fast);
 }
 
 .fs-input-send-btn:hover {
+  background: rgba(255, 255, 255, 0.35);
   transform: scale(1.05);
 }
 
 .fs-input-send-btn:disabled {
   opacity: 0.3;
+  background: transparent;
+  border-color: transparent;
   cursor: not-allowed;
   transform: none;
 }
