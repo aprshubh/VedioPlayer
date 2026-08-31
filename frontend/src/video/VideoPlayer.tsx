@@ -562,102 +562,64 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
       )}
 
       {/* ========================================================== */}
-      {/* FULLSCREEN INTERACTIVE CHAT OVERLAY PANEL                  */}
+      {/* FULLSCREEN TRANSPARENT FLOATING CHAT OVERLAY               */}
       {/* ========================================================== */}
       {isFullscreen && isFullscreenChatOpen && (
         <div className="fullscreen-chat-panel">
-          <div className="fs-chat-header">
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <MessageSquare size={15} />
-              <span style={{ fontSize: 13, fontWeight: 700 }}>Fullscreen Chat</span>
-            </div>
-            <button
-              type="button"
-              onClick={() => setIsFullscreenChatOpen(false)}
-              className="ctrl-btn"
-              style={{ padding: 4 }}
-            >
-              <X size={16} />
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => setIsFullscreenChatOpen(false)}
+            className="fs-floating-close-btn"
+            title="Close Chat"
+          >
+            <X size={14} />
+          </button>
 
           <div className="fs-chat-messages">
-            {chatMessages.length === 0 ? (
-              <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: 12, marginTop: 40 }}>
+            {chatMessages.filter((m) => !m.isSystem).length === 0 ? (
+              <div style={{ textAlign: 'right', color: 'rgba(255, 255, 255, 0.45)', fontSize: 11, padding: 8 }}>
                 No messages yet
               </div>
             ) : (
-              chatMessages.map((msg) => {
-                if (msg.isSystem) {
+              chatMessages
+                .filter((m) => !m.isSystem)
+                .map((msg) => {
+                  const isMe = msg.userName === currentUserName;
                   return (
                     <div
                       key={msg.id}
-                      style={{
-                        textAlign: 'center',
-                        fontSize: 10,
-                        color: 'rgba(255, 255, 255, 0.45)',
-                        fontStyle: 'italic',
-                        padding: '2px 0',
-                      }}
+                      className={`fs-msg-item ${isMe ? 'is-me' : 'is-other'}`}
                     >
-                      {msg.message}
+                      {!isMe && (
+                        <span className="fs-msg-author">
+                          {msg.userName}
+                        </span>
+                      )}
+                      <div className="fs-msg-bubble">
+                        {msg.message}
+                      </div>
                     </div>
                   );
-                }
-
-                const isMe = msg.userName === currentUserName;
-
-                return (
-                  <div
-                    key={msg.id}
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: isMe ? 'flex-end' : 'flex-start',
-                    }}
-                  >
-                    <span style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 2 }}>
-                      {msg.userName}
-                    </span>
-                    <div
-                      style={{
-                        padding: '6px 12px',
-                        borderRadius: 12,
-                        fontSize: 12,
-                        maxWidth: '85%',
-                        wordBreak: 'break-word',
-                        backgroundColor: isMe ? '#ffffff' : 'rgba(255, 255, 255, 0.12)',
-                        color: isMe ? '#000000' : '#ffffff',
-                        fontWeight: isMe ? 600 : 400,
-                      }}
-                    >
-                      {msg.message}
-                    </div>
-                  </div>
-                );
-              })
+                })
             )}
             <div ref={fsChatEndRef} />
           </div>
 
           <form onSubmit={handleSendFsChat} className="fs-chat-input-area">
-            <div style={{ display: 'flex', gap: 6 }}>
+            <div className="fs-input-pill">
               <input
                 type="text"
                 value={fsInputMessage}
                 onChange={(e) => setFsInputMessage(e.target.value)}
-                placeholder="Type message in fullscreen..."
-                className="form-input"
-                style={{ flex: 1, padding: '8px 12px', fontSize: 12 }}
+                placeholder="Type message..."
                 autoFocus
               />
               <button
                 type="submit"
                 disabled={!fsInputMessage.trim()}
-                className="ctrl-btn"
-                style={{ padding: '8px 12px', background: '#ffffff', color: '#000000' }}
+                className="fs-input-send-btn"
               >
-                <Send size={14} />
+                <Send size={12} />
               </button>
             </div>
           </form>

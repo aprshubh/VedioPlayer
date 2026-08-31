@@ -2,7 +2,6 @@ package websocket
 
 import (
 	"encoding/json"
-	"fmt"
 	"html"
 	"log"
 	"sync"
@@ -210,37 +209,6 @@ func (h *Hub) HandleIncomingMessage(client *Client, msg *model.WSMessage) {
 			Timestamp: nowMs,
 			Payload:   newState,
 		})
-
-		// Optionally emit system message in chat
-		var sysText string
-		switch msg.Type {
-		case model.EventPlay:
-			sysText = fmt.Sprintf("%s played the video", client.UserName)
-		case model.EventPause:
-			sysText = fmt.Sprintf("%s paused the video", client.UserName)
-		case model.EventSeek:
-			sysText = fmt.Sprintf("%s jumped to %.1fs", client.UserName, action.Position)
-		case model.EventRate:
-			sysText = fmt.Sprintf("%s changed speed to %.2fx", client.UserName, action.Rate)
-		}
-		if sysText != "" {
-			sysMsg := &model.Message{
-				ID:        uuid.NewString(),
-				RoomID:    client.RoomID,
-				UserID:    "system",
-				UserName:  "System",
-				Message:   sysText,
-				IsSystem:  true,
-				CreatedAt: time.Now(),
-			}
-			_ = h.store.SaveMessage(sysMsg)
-			h.BroadcastToRoom(client.RoomID, &model.WSMessage{
-				Type:      model.EventChatMessage,
-				RoomID:    client.RoomID,
-				Timestamp: nowMs,
-				Payload:   sysMsg,
-			})
-		}
 
 	case model.EventSyncRequest:
 		var req model.SyncRequestPayload

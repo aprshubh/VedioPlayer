@@ -118,11 +118,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
         ) : (
           messages.map((msg) => {
             if (msg.isSystem) {
-              return (
-                <div key={msg.id} className="system-msg-row">
-                  <span className="system-msg-text">{msg.message}</span>
-                </div>
-              );
+              return null;
             }
 
             const isMe = msg.userId === currentUser.id;
