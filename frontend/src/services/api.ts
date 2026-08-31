@@ -3,20 +3,20 @@ import type { Room, RoomMember, User } from '../types';
 const API_BASE = (import.meta.env.VITE_API_URL as string) || (window.location.origin.includes('5173') ? 'http://localhost:8080' : '');
 
 export const getAuthToken = (): string | null => {
-  return localStorage.getItem('dyuet_token');
+  return sessionStorage.getItem('dyuet_token');
 };
 
 export const setAuthToken = (token: string) => {
-  localStorage.setItem('dyuet_token', token);
+  sessionStorage.setItem('dyuet_token', token);
 };
 
 export const clearAuthToken = () => {
-  localStorage.removeItem('dyuet_token');
-  localStorage.removeItem('dyuet_user');
+  sessionStorage.removeItem('dyuet_token');
+  sessionStorage.removeItem('dyuet_user');
 };
 
 export const getStoredUser = (): User | null => {
-  const data = localStorage.getItem('dyuet_user');
+  const data = sessionStorage.getItem('dyuet_user');
   if (!data) return null;
   try {
     return JSON.parse(data);
@@ -26,7 +26,7 @@ export const getStoredUser = (): User | null => {
 };
 
 export const setStoredUser = (user: User) => {
-  localStorage.setItem('dyuet_user', JSON.stringify(user));
+  sessionStorage.setItem('dyuet_user', JSON.stringify(user));
 };
 
 const getHeaders = () => {
@@ -85,6 +85,10 @@ export const api = {
     setAuthToken(data.token);
     setStoredUser(data.user);
     return data;
+  },
+
+  async createSession(name: string): Promise<{ user: User; token: string }> {
+    return this.guestLogin(name);
   },
 
   async getMe(): Promise<User> {

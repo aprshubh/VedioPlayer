@@ -8,7 +8,6 @@ import {
   Users,
   Shield,
   Crown,
-  LogOut,
   Sun,
   Moon,
   MessageSquare,
@@ -22,7 +21,6 @@ interface RoomControlsProps {
   wsStatus: 'CONNECTING' | 'CONNECTED' | 'DISCONNECTED';
   onUpdateSettings: (onlyHostCanControl: boolean) => void;
   onLeaveRoom: () => void;
-  onLogout: () => void;
   isChatOpen: boolean;
   onToggleChat: () => void;
   unreadCount: number;
@@ -36,7 +34,6 @@ export const RoomControls: React.FC<RoomControlsProps> = ({
   wsStatus,
   onUpdateSettings,
   onLeaveRoom,
-  onLogout,
   isChatOpen,
   onToggleChat,
   unreadCount,
@@ -200,18 +197,9 @@ export const RoomControls: React.FC<RoomControlsProps> = ({
             type="button"
             onClick={onLeaveRoom}
             className="header-btn"
-            style={{ padding: '6px 10px', fontSize: 11 }}
+            style={{ padding: '6px 12px', fontSize: 12, fontWeight: 600 }}
           >
-            Leave
-          </button>
-          <button
-            type="button"
-            onClick={onLogout}
-            className="header-btn"
-            title="Log Out"
-            style={{ padding: '6px 8px' }}
-          >
-            <LogOut size={14} />
+            Leave Room
           </button>
         </div>
       </div>

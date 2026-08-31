@@ -1,18 +1,22 @@
 import { useState, useEffect, useRef } from 'react';
 import type { User, Room, RoomMember, VideoState, Message, AudioChangePayload } from './types';
-import { api, getStoredUser, clearAuthToken } from './services/api';
+import { api, getStoredUser, getAuthToken } from './services/api';
 import { WebSocketClient } from './services/websocket';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { DyuetLogo } from './components/DyuetLogo';
-import { AuthModal } from './auth/AuthModal';
 import { RoomControls } from './room/RoomControls';
 import { VideoPlayer } from './video/VideoPlayer';
 import { ChatPanel } from './chat/ChatPanel';
-import { PlusCircle, LogIn, Sun, Moon } from 'lucide-react';
+import { PlusCircle, LogIn, Sun, Moon, User as UserIcon } from 'lucide-react';
 
 function DyuetApp() {
   const { theme, toggleTheme } = useTheme();
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(() => getStoredUser());
+  const [nameInput, setNameInput] = useState<string>(() => {
+    const saved = getStoredUser();
+    return saved?.name || '';
+  });
+
   const [room, setRoom] = useState<Room | null>(null);
   const [members, setMembers] = useState<RoomMember[]>([]);
   const [isHost, setIsHost] = useState<boolean>(false);
@@ -37,13 +41,6 @@ function DyuetApp() {
   const isDark = theme === 'dark';
 
   useEffect(() => {
-    const saved = getStoredUser();
-    if (saved) {
-      setCurrentUser(saved);
-    }
-  }, []);
-
-  useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const joinCode = params.get('join');
     if (joinCode) {
@@ -60,7 +57,7 @@ function DyuetApp() {
       return;
     }
 
-    const token = localStorage.getItem('dyuet_token') || '';
+    const token = getAuthToken() || '';
     const client = new WebSocketClient(token, room.id, (status) => {
       setWsStatus(status);
     });
@@ -74,7 +71,7 @@ function DyuetApp() {
       };
       if (payload.room) setRoom(payload.room);
       if (payload.members) setMembers(payload.members);
-      if (payload.messages) setAllMessages(payload.messages);
+      if (payload.messages) setAllMessages(payload.messages.filter((m) => !m.isSystem));
       if (payload.videoState) setInitialVideoState(payload.videoState);
     });
 
@@ -101,9 +98,7 @@ function DyuetApp() {
 
     client.on('USER_LEAVE', (msg) => {
       const p = msg.payload as { userId: string; isOnline: boolean };
-      setMembers((prev) =>
-        prev.map((m) => (m.userId === p.userId ? { ...m, isOnline: false } : m))
-      );
+      setMembers((prev) => prev.filter((m) => m.userId !== p.userId));
     });
 
     client.on('UPDATE_SETTINGS', (msg) => {
@@ -126,19 +121,36 @@ function DyuetApp() {
     };
   }, [currentUser, room?.id]);
 
+  // Ensure ephemeral user session exists with chosen name
+  const ensureSession = async (): Promise<User> => {
+    const finalName = nameInput.trim() || 'Guest_' + Math.random().toString(36).substring(2, 6);
+    if (!nameInput.trim()) {
+      setNameInput(finalName);
+    }
+
+    if (currentUser && currentUser.name === finalName && getAuthToken()) {
+      return currentUser;
+    }
+
+    // Instantly generate unique ephemeral ID on server
+    const session = await api.createSession(finalName);
+    setCurrentUser(session.user);
+    return session.user;
+  };
+
   const handleCreateRoom = async () => {
-    if (!currentUser) return;
     setLoading(true);
     setError(null);
     try {
+      const user = await ensureSession();
       const newRoom = await api.createRoom();
       setRoom(newRoom);
       setIsHost(true);
       setMembers([
         {
           roomId: newRoom.id,
-          userId: currentUser.id,
-          user: currentUser,
+          userId: user.id,
+          user: user,
           isHost: true,
           isOnline: true,
           joinedAt: new Date().toISOString(),
@@ -153,10 +165,11 @@ function DyuetApp() {
 
   const handleJoinRoom = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentUser || !joinCodeInput.trim()) return;
+    if (!joinCodeInput.trim()) return;
     setLoading(true);
     setError(null);
     try {
+      await ensureSession();
       const res = await api.joinRoom(joinCodeInput.trim());
       setRoom(res.room);
       setIsHost(res.isHost);
@@ -181,12 +194,6 @@ function DyuetApp() {
     setAllMessages([]);
   };
 
-  const handleLogout = () => {
-    handleLeaveRoom();
-    clearAuthToken();
-    setCurrentUser(null);
-  };
-
   const handleUpdateSettings = (onlyHostCanControl: boolean) => {
     wsClientRef.current?.sendUpdateSettings(onlyHostCanControl);
     setRoom((prev) => (prev ? { ...prev, onlyHostCanControl } : null));
@@ -194,9 +201,11 @@ function DyuetApp() {
 
   // Handle incoming message to show floating notification bubble
   const handleNewMessage = (msg: Message) => {
+    if (msg.isSystem) return;
+
     setAllMessages((prev) => [...prev, msg]);
 
-    if (msg.userId === currentUser?.id || msg.isSystem) return;
+    if (msg.userId === currentUser?.id) return;
 
     if (!isChatOpen) {
       setUnreadCount((c) => c + 1);
@@ -233,11 +242,7 @@ function DyuetApp() {
     wsClientRef.current?.sendChatMessage(text);
   };
 
-  if (!currentUser) {
-    return <AuthModal onSuccess={(user) => setCurrentUser(user)} />;
-  }
-
-  // Refined Cinema Lobby Screen
+  // Zero-login instant Cinema Lobby Screen
   if (!room) {
     return (
       <div className="lobby-screen">
@@ -250,32 +255,6 @@ function DyuetApp() {
             title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
           >
             {isDark ? <Sun size={15} /> : <Moon size={15} />}
-          </button>
-        </div>
-
-        {/* User Card */}
-        <div className="lobby-user-bar">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <img
-              src={currentUser.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(currentUser.name)}`}
-              alt={currentUser.name}
-              style={{ width: 34, height: 34, borderRadius: 'var(--radius-sm)' }}
-            />
-            <div>
-              <h4 style={{ fontSize: 13, fontWeight: 700 }}>{currentUser.name}</h4>
-              <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-                {currentUser.email || 'Participant'}
-              </span>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="header-btn"
-            style={{ padding: '6px 12px', fontSize: 12 }}
-          >
-            Sign out
           </button>
         </div>
 
@@ -292,6 +271,24 @@ function DyuetApp() {
 
           {error && <div className="auth-error" style={{ textAlign: 'center' }}>{error}</div>}
 
+          {/* Quick Name Input */}
+          <div style={{ marginBottom: 20, textAlign: 'left' }}>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 700, marginBottom: 6, color: 'var(--text-secondary)' }}>
+              Your Name
+            </label>
+            <div className="input-with-icon">
+              <UserIcon className="input-icon" size={15} />
+              <input
+                type="text"
+                value={nameInput}
+                onChange={(e) => setNameInput(e.target.value)}
+                placeholder="Enter your name (e.g. Shubh)"
+                className="form-input has-icon"
+                autoFocus
+              />
+            </div>
+          </div>
+
           {/* Action 1: Create Room */}
           <button
             type="button"
@@ -300,7 +297,7 @@ function DyuetApp() {
             className="btn-primary"
           >
             <PlusCircle size={16} />
-            Create Watch Room
+            {loading ? 'Creating...' : 'Create Watch Room'}
           </button>
 
           <div className="divider-row">
@@ -326,12 +323,12 @@ function DyuetApp() {
               className="btn-secondary"
             >
               <LogIn size={15} />
-              Join Session
+              {loading ? 'Joining...' : 'Join Session'}
             </button>
           </form>
 
-          <div style={{ textAlign: 'center', fontSize: 11, color: 'var(--text-muted)', marginTop: 20 }}>
-            Direct local playback • Zero video upload • High precision drift sync
+          <div style={{ textAlign: 'center', fontSize: 11, color: 'var(--text-muted)', marginTop: 22 }}>
+            Instant ephemeral session • Zero signup • Closes on tab exit
           </div>
         </div>
       </div>
@@ -343,13 +340,12 @@ function DyuetApp() {
     <div className="app-container">
       <RoomControls
         room={room}
-        currentUser={currentUser}
+        currentUser={currentUser || { id: '', name: nameInput || 'User', email: '', avatar: '' }}
         members={members}
         isHost={isHost}
         wsStatus={wsStatus}
         onUpdateSettings={handleUpdateSettings}
         onLeaveRoom={handleLeaveRoom}
-        onLogout={handleLogout}
         isChatOpen={isChatOpen}
         onToggleChat={handleToggleChat}
         unreadCount={unreadCount}
@@ -359,7 +355,7 @@ function DyuetApp() {
         <VideoPlayer
           room={room}
           isHost={isHost}
-          currentUserName={currentUser.name}
+          currentUserName={currentUser?.name || nameInput || 'User'}
           wsClient={wsClientRef.current}
           initialVideoState={initialVideoState}
           activeNotification={activeNotification}
@@ -373,7 +369,7 @@ function DyuetApp() {
         />
 
         <ChatPanel
-          currentUser={currentUser}
+          currentUser={currentUser || { id: '', name: nameInput || 'User', email: '', avatar: '' }}
           wsClient={wsClientRef.current}
           initialMessages={allMessages}
           isOpen={isChatOpen}

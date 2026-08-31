@@ -88,8 +88,8 @@ func (h *Hub) unregisterClient(client *Client) {
 	}
 	h.mu.Unlock()
 
-	// Update DB presence
-	_ = h.store.UpdateMemberOnline(client.RoomID, client.UserID, false)
+	// Remove member from room on disconnect
+	_ = h.store.RemoveMember(client.RoomID, client.UserID)
 
 	// Broadcast user leave/offline event
 	h.BroadcastToRoom(client.RoomID, &model.WSMessage{
