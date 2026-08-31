@@ -3,12 +3,12 @@ version: '3.8'
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: dyuet-postgres
+    container_name: duet-postgres
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password123
-      POSTGRES_DB: dyuet
+      POSTGRES_DB: duet
     ports:
       - "5432:5432"
     volumes:
@@ -22,7 +22,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: dyuet-redis
+    container_name: duet-redis
     restart: unless-stopped
     ports:
       - "6379:6379"
@@ -38,7 +38,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: dyuet-backend
+    container_name: duet-backend
     restart: unless-stopped
     depends_on:
       postgres:
@@ -47,9 +47,9 @@ services:
         condition: service_healthy
     environment:
       PORT: 8080
-      DATABASE_URL: postgres://postgres:password123@postgres:5432/dyuet?sslmode=disable
+      DATABASE_URL: postgres://postgres:password123@postgres:5432/duet?sslmode=disable
       REDIS_ADDR: redis:6379
-      JWT_SECRET: super-secret-dyuet-jwt-key
+      JWT_SECRET: super-secret-duet-jwt-key
       ENV: production
     ports:
       - "8080:8080"
@@ -58,7 +58,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: dyuet-frontend
+    container_name: duet-frontend
     restart: unless-stopped
     depends_on:
       - backend

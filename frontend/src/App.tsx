@@ -264,7 +264,7 @@ function DyuetApp() {
             <DyuetLogo size={36} />
           </div>
 
-          <h2 className="lobby-heading">DYUET</h2>
+          <h2 className="lobby-heading">Duet</h2>
           <p className="lobby-subheading">
             Synchronized cinema session for any video
           </p>

@@ -56,7 +56,7 @@ export const RoomControls: React.FC<RoomControlsProps> = ({
       {/* Left: Brand & Room Code */}
       <div className="header-left">
         <DyuetLogo size={28} />
-        <span className="brand-title">DYUET</span>
+        <span className="brand-title">Duet</span>
 
         {/* Room Code Badge */}
         <div className="room-code-badge">
